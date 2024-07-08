@@ -59,9 +59,9 @@ public class IcebergConversionTarget implements ConversionTarget {
   private IcebergDataFileUpdatesSync dataFileUpdatesExtractor;
   private IcebergTableManager tableManager;
   private String basePath;
+  private String dataPath;
   private TableIdentifier tableIdentifier;
   private IcebergCatalogConfig catalogConfig;
-  private Configuration configuration;
   private int snapshotRetentionInHours;
   private Transaction transaction;
   private Table table;
@@ -71,7 +71,6 @@ public class IcebergConversionTarget implements ConversionTarget {
 
   IcebergConversionTarget(
       TargetTable targetTable,
-      Configuration configuration,
       IcebergSchemaExtractor schemaExtractor,
       IcebergSchemaSync schemaSync,
       IcebergPartitionSpecExtractor partitionSpecExtractor,
@@ -80,7 +79,6 @@ public class IcebergConversionTarget implements ConversionTarget {
       IcebergTableManager tableManager) {
     _init(
         targetTable,
-        configuration,
         schemaExtractor,
         schemaSync,
         partitionSpecExtractor,
@@ -91,7 +89,6 @@ public class IcebergConversionTarget implements ConversionTarget {
 
   private void _init(
       TargetTable targetTable,
-      Configuration configuration,
       IcebergSchemaExtractor schemaExtractor,
       IcebergSchemaSync schemaSync,
       IcebergPartitionSpecExtractor partitionSpecExtractor,
@@ -105,7 +102,7 @@ public class IcebergConversionTarget implements ConversionTarget {
     this.dataFileUpdatesExtractor = dataFileUpdatesExtractor;
     String tableName = targetTable.getName();
     this.basePath = targetTable.getMetadataPath();
-    this.configuration = configuration;
+    this.dataPath = targetTable.getDataPath();
     this.snapshotRetentionInHours = (int) targetTable.getMetadataRetention().toHours();
     String[] namespace = targetTable.getNamespace();
     this.tableIdentifier =
@@ -127,7 +124,6 @@ public class IcebergConversionTarget implements ConversionTarget {
   public void init(TargetTable targetTable, Configuration configuration) {
     _init(
         targetTable,
-        configuration,
         IcebergSchemaExtractor.getInstance(),
         IcebergSchemaSync.getInstance(),
         IcebergPartitionSpecExtractor.getInstance(),
@@ -178,7 +174,7 @@ public class IcebergConversionTarget implements ConversionTarget {
     updateProperties.set(TableSyncMetadata.XTABLE_METADATA, metadata.toJson());
     if (!table.properties().containsKey(TableProperties.WRITE_DATA_LOCATION)) {
       // Required for a consistent write location when writing back to the table as Iceberg
-      updateProperties.set(TableProperties.WRITE_DATA_LOCATION, basePath);
+      updateProperties.set(TableProperties.WRITE_DATA_LOCATION, dataPath);
     }
     if (!Boolean.parseBoolean(
         table

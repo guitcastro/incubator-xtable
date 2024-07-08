@@ -35,10 +35,11 @@ public class TargetTable extends ExternalTable {
       String name,
       String formatName,
       String metadataPath,
+      String dataPath,
       String[] namespace,
       CatalogConfig catalogConfig,
       Duration metadataRetention) {
-    super(name, formatName, metadataPath, namespace, catalogConfig);
+    super(name, formatName, metadataPath, dataPath, namespace, catalogConfig);
     this.metadataRetention =
         metadataRetention == null ? Duration.of(7, ChronoUnit.DAYS) : metadataRetention;
   }

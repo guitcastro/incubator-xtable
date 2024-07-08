@@ -32,6 +32,7 @@ class ExternalTable {
   @NonNull String name;
   @NonNull String formatName;
   @NonNull String metadataPath;
+  @NonNull String dataPath;
   String[] namespace;
   CatalogConfig catalogConfig;
 
@@ -39,11 +40,13 @@ class ExternalTable {
       @NonNull String name,
       @NonNull String formatName,
       @NonNull String basePath,
+      String dataPath,
       String[] namespace,
       CatalogConfig catalogConfig) {
     this.name = name;
     this.formatName = formatName;
     this.metadataPath = sanitizeBasePath(basePath);
+    this.dataPath = dataPath == null ? metadataPath : sanitizeBasePath(dataPath);
     this.namespace = namespace;
     this.catalogConfig = catalogConfig;
   }

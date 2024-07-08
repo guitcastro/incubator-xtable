@@ -20,13 +20,9 @@ package org.apache.xtable.conversion;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
 
 @EqualsAndHashCode(callSuper = true)
-@Getter
 public class SourceTable extends ExternalTable {
-  @NonNull String dataPath;
 
   @Builder(toBuilder = true)
   public SourceTable(
@@ -36,7 +32,6 @@ public class SourceTable extends ExternalTable {
       String dataPath,
       String[] namespace,
       CatalogConfig catalogConfig) {
-    super(name, formatName, metadataPath, namespace, catalogConfig);
-    this.dataPath = dataPath == null ? this.metadataPath : sanitizeBasePath(dataPath);
+    super(name, formatName, metadataPath, dataPath, namespace, catalogConfig);
   }
 }
