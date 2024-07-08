@@ -112,7 +112,7 @@ public class HudiConversionTarget implements ConversionTarget {
       Configuration configuration,
       int maxNumDeltaCommitsBeforeCompaction) {
     this(
-        targetTable.getDataPath(),
+        targetTable.getMetadataPath(),
         (int) targetTable.getMetadataRetention().toHours(),
         maxNumDeltaCommitsBeforeCompaction,
         BaseFileUpdatesExtractor.of(

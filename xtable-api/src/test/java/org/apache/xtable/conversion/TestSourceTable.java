@@ -18,28 +18,30 @@
  
 package org.apache.xtable.conversion;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import org.junit.jupiter.api.Test;
 
-@Getter
-@EqualsAndHashCode(callSuper = true)
-public class TargetTable extends ExternalTable {
-  Duration metadataRetention;
+class TestSourceTable {
+  @Test
+  void dataPathDefaultsToMetadataPath() {
+    String metadataPath = "file:///path/to/table";
+    SourceTable sourceTable =
+        SourceTable.builder().name("name").formatName("hudi").metadataPath(metadataPath).build();
+    assertEquals(metadataPath, sourceTable.getDataPath());
+  }
 
-  @Builder(toBuilder = true)
-  public TargetTable(
-      String name,
-      String formatName,
-      String metadataPath,
-      String[] namespace,
-      CatalogConfig catalogConfig,
-      Duration metadataRetention) {
-    super(name, formatName, metadataPath, namespace, catalogConfig);
-    this.metadataRetention =
-        metadataRetention == null ? Duration.of(7, ChronoUnit.DAYS) : metadataRetention;
+  @Test
+  void dataPathIsSanitized() {
+    String metadataPath = "file:///path/to/table";
+    String dataPath = "file:///path/to/table//data";
+    SourceTable sourceTable =
+        SourceTable.builder()
+            .name("name")
+            .formatName("hudi")
+            .metadataPath(metadataPath)
+            .dataPath(dataPath)
+            .build();
+    assertEquals("file:///path/to/table/data", sourceTable.getDataPath());
   }
 }

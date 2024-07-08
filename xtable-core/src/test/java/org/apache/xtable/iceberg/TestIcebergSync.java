@@ -197,6 +197,7 @@ public class TestIcebergSync {
             .metadataRetention(Duration.of(1, ChronoUnit.HOURS))
             .formatName(TableFormat.ICEBERG)
             .build(),
+        CONFIGURATION,
         mockSchemaExtractor,
         mockSchemaSync,
         mockPartitionSpecExtractor,
