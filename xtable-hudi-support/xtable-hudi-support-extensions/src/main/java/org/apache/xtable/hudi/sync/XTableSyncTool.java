@@ -19,6 +19,7 @@
 package org.apache.xtable.hudi.sync;
 
 import static org.apache.xtable.hudi.HudiSourceConfig.PARTITION_FIELD_SPEC_CONFIG;
+import static org.apache.xtable.model.storage.TableFormat.HUDI;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -64,23 +65,23 @@ public class XTableSyncTool extends HoodieSyncTool {
   @Override
   public void syncHoodieTable() {
     List<String> formatsToSync =
-        Arrays.stream(config.getString(XTableSyncConfig.ONE_TABLE_FORMATS).split(","))
+        Arrays.stream(config.getString(XTableSyncConfig.XTABLE_FORMATS).split(","))
             .map(format -> format.toUpperCase())
             .collect(Collectors.toList());
     String basePath = config.getString(HoodieSyncConfig.META_SYNC_BASE_PATH);
     String tableName = config.getString(HoodieTableConfig.HOODIE_TABLE_NAME_KEY);
-    SourceTable sourceTable = SourceTable.builder().name(tableName).metadataPath(basePath).build();
+    SourceTable sourceTable = SourceTable.builder().name(tableName).formatName(HUDI).metadataPath(basePath).build();
+    Duration metadataRetention = config.contains(XTableSyncConfig.XTABLE_TARGET_METADATA_RETENTION_HOURS) ? Duration.ofHours(
+        config.getInt(XTableSyncConfig.XTABLE_TARGET_METADATA_RETENTION_HOURS)) : null;
     List<TargetTable> targetTables =
         formatsToSync.stream()
             .map(
                 format ->
                     TargetTable.builder()
                         .metadataPath(basePath)
-                        .metadataRetention(
-                            Duration.ofHours(
-                                config.getInt(
-                                    XTableSyncConfig.ONE_TABLE_TARGET_METADATA_RETENTION_HOURS)))
+                        .metadataRetention(metadataRetention)
                         .formatName(format)
+                        .name(tableName)
                         .build())
             .collect(Collectors.toList());
     TableSyncConfig tableSyncConfig =
