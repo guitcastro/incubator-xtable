@@ -35,8 +35,7 @@ import org.apache.hudi.sync.common.HoodieSyncConfig;
 import org.apache.hudi.sync.common.HoodieSyncTool;
 
 import org.apache.xtable.conversion.ConversionController;
-import org.apache.xtable.conversion.PerTableConfig;
-import org.apache.xtable.conversion.PerTableConfigImpl;
+import org.apache.xtable.conversion.TableSyncConfig;
 import org.apache.xtable.hudi.HudiConversionSourceProvider;
 import org.apache.xtable.hudi.HudiSourceConfigImpl;
 import org.apache.xtable.model.schema.PartitionTransformType;
@@ -66,8 +65,8 @@ public class XTableSyncTool extends HoodieSyncTool {
             .collect(Collectors.toList());
     String basePath = config.getString(HoodieSyncConfig.META_SYNC_BASE_PATH);
     String tableName = config.getString(HoodieTableConfig.HOODIE_TABLE_NAME_KEY);
-    PerTableConfig perTableConfig =
-        PerTableConfigImpl.builder()
+    TableSyncConfig tableSyncConfig =
+        TableSyncConfigImpl.builder()
             .tableName(tableName)
             .tableBasePath(basePath)
             .targetTableFormats(formatsToSync)
@@ -80,7 +79,7 @@ public class XTableSyncTool extends HoodieSyncTool {
                 config.getInt(XTableSyncConfig.ONE_TABLE_TARGET_METADATA_RETENTION_HOURS))
             .build();
     Map<String, SyncResult> results =
-        new ConversionController(hadoopConf).sync(perTableConfig, hudiConversionSourceProvider);
+        new ConversionController(hadoopConf).sync(tableSyncConfig, hudiConversionSourceProvider);
     String failingFormats =
         results.entrySet().stream()
             .filter(

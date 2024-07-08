@@ -18,6 +18,8 @@
  
 package org.apache.xtable.hudi;
 
+import java.util.Map;
+
 import lombok.extern.log4j.Log4j2;
 
 import org.apache.hudi.common.model.HoodieTableType;
@@ -25,19 +27,19 @@ import org.apache.hudi.common.table.HoodieTableMetaClient;
 import org.apache.hudi.common.table.timeline.HoodieInstant;
 
 import org.apache.xtable.conversion.ConversionSourceProvider;
-import org.apache.xtable.conversion.PerTableConfig;
+import org.apache.xtable.conversion.SourceTable;
 
 /** A concrete implementation of {@link ConversionSourceProvider} for Hudi table format. */
 @Log4j2
 public class HudiConversionSourceProvider extends ConversionSourceProvider<HoodieInstant> {
 
   @Override
-  public HudiConversionSource getConversionSourceInstance(PerTableConfig sourceTableConfig) {
-    this.sourceTableConfig = sourceTableConfig;
+  public HudiConversionSource getConversionSourceInstance(
+      SourceTable sourceTable, Map<String, String> clientConfigs) {
     HoodieTableMetaClient metaClient =
         HoodieTableMetaClient.builder()
             .setConf(hadoopConf)
-            .setBasePath(this.sourceTableConfig.getTableBasePath())
+            .setBasePath(sourceTable.getMetadataPath())
             .setLoadActiveTimelineOnLoad(true)
             .build();
     if (!metaClient.getTableConfig().getTableType().equals(HoodieTableType.COPY_ON_WRITE)) {
@@ -45,8 +47,7 @@ public class HudiConversionSourceProvider extends ConversionSourceProvider<Hoodi
     }
 
     final HudiSourcePartitionSpecExtractor sourcePartitionSpecExtractor =
-        (HudiSourcePartitionSpecExtractor)
-            sourceTableConfig.getHudiSourceConfig().loadSourcePartitionSpecExtractor();
+        HudiSourceConfig.fromProperties(clientConfigs).loadSourcePartitionSpecExtractor();
 
     return new HudiConversionSource(metaClient, sourcePartitionSpecExtractor);
   }

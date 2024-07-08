@@ -18,26 +18,22 @@
  
 package org.apache.xtable.conversion;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
 
 import org.apache.xtable.model.sync.SyncMode;
 
-public interface PerTableConfig {
-  int getTargetMetadataRetentionInHours();
-
-  String getTableBasePath();
-
-  String getTableDataPath();
-
-  String getTableName();
-
-  HudiSourceConfig getHudiSourceConfig();
-
-  List<String> getTargetTableFormats();
-
-  SyncMode getSyncMode();
-
-  String[] getNamespace();
-
-  CatalogConfig getIcebergCatalogConfig();
+@Value
+@Builder(toBuilder = true)
+public class TableSyncConfig {
+  // TODO add docs for all fields
+  @NonNull SourceTable sourceTable;
+  List<TargetTable> targetTables;
+  @Builder.Default SyncMode syncMode = SyncMode.INCREMENTAL;
+  @Builder.Default Map<String, String> properties = Collections.emptyMap();
 }

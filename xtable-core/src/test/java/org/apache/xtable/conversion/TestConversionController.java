@@ -18,7 +18,7 @@
  
 package org.apache.xtable.conversion;
 
-import static org.apache.xtable.GenericTable.getTableName;
+import static org.apache.xtable.model.storage.TableFormat.HUDI;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -79,13 +79,16 @@ public class TestConversionController {
     Map<String, SyncResult> perTableResults = new HashMap<>();
     perTableResults.put(TableFormat.ICEBERG, syncResult);
     perTableResults.put(TableFormat.DELTA, syncResult);
-    PerTableConfig perTableConfig =
-        getPerTableConfig(Arrays.asList(TableFormat.ICEBERG, TableFormat.DELTA), syncMode);
-    when(mockConversionSourceProvider.getConversionSourceInstance(perTableConfig))
+    TableSyncConfig tableSyncConfig =
+        getTableSyncConfig(Arrays.asList(TableFormat.ICEBERG, TableFormat.DELTA), syncMode);
+    when(mockConversionSourceProvider.getConversionSourceInstance(
+            tableSyncConfig.getSourceTable(), tableSyncConfig.getProperties()))
         .thenReturn(mockConversionSource);
-    when(mockConversionTargetFactory.createForFormat(TableFormat.ICEBERG, perTableConfig, mockConf))
+    when(mockConversionTargetFactory.createForFormat(
+            tableSyncConfig.getTargetTables().get(0), mockConf))
         .thenReturn(mockConversionTarget1);
-    when(mockConversionTargetFactory.createForFormat(TableFormat.DELTA, perTableConfig, mockConf))
+    when(mockConversionTargetFactory.createForFormat(
+            tableSyncConfig.getTargetTables().get(1), mockConf))
         .thenReturn(mockConversionTarget2);
     when(mockConversionSource.getCurrentSnapshot()).thenReturn(internalSnapshot);
     when(tableFormatSync.syncSnapshot(
@@ -95,20 +98,23 @@ public class TestConversionController {
     ConversionController conversionController =
         new ConversionController(mockConf, mockConversionTargetFactory, tableFormatSync);
     Map<String, SyncResult> result =
-        conversionController.sync(perTableConfig, mockConversionSourceProvider);
+        conversionController.sync(tableSyncConfig, mockConversionSourceProvider);
     assertEquals(perTableResults, result);
   }
 
   @Test
   void testAllIncrementalSyncAsPerConfigAndNoFallbackNecessary() {
     SyncMode syncMode = SyncMode.INCREMENTAL;
-    PerTableConfig perTableConfig =
-        getPerTableConfig(Arrays.asList(TableFormat.ICEBERG, TableFormat.DELTA), syncMode);
-    when(mockConversionSourceProvider.getConversionSourceInstance(perTableConfig))
+    TableSyncConfig tableSyncConfig =
+        getTableSyncConfig(Arrays.asList(TableFormat.ICEBERG, TableFormat.DELTA), syncMode);
+    when(mockConversionSourceProvider.getConversionSourceInstance(
+            tableSyncConfig.getSourceTable(), tableSyncConfig.getProperties()))
         .thenReturn(mockConversionSource);
-    when(mockConversionTargetFactory.createForFormat(TableFormat.ICEBERG, perTableConfig, mockConf))
+    when(mockConversionTargetFactory.createForFormat(
+            tableSyncConfig.getTargetTables().get(0), mockConf))
         .thenReturn(mockConversionTarget1);
-    when(mockConversionTargetFactory.createForFormat(TableFormat.DELTA, perTableConfig, mockConf))
+    when(mockConversionTargetFactory.createForFormat(
+            tableSyncConfig.getTargetTables().get(1), mockConf))
         .thenReturn(mockConversionTarget2);
 
     Instant instantAsOfNow = Instant.now();
@@ -178,7 +184,7 @@ public class TestConversionController {
     ConversionController conversionController =
         new ConversionController(mockConf, mockConversionTargetFactory, tableFormatSync);
     Map<String, SyncResult> result =
-        conversionController.sync(perTableConfig, mockConversionSourceProvider);
+        conversionController.sync(tableSyncConfig, mockConversionSourceProvider);
     assertEquals(expectedSyncResult, result);
   }
 
@@ -192,13 +198,16 @@ public class TestConversionController {
     Map<String, SyncResult> syncResults = new HashMap<>();
     syncResults.put(TableFormat.ICEBERG, syncResult);
     syncResults.put(TableFormat.DELTA, syncResult);
-    PerTableConfig perTableConfig =
-        getPerTableConfig(Arrays.asList(TableFormat.ICEBERG, TableFormat.DELTA), syncMode);
-    when(mockConversionSourceProvider.getConversionSourceInstance(perTableConfig))
+    TableSyncConfig tableSyncConfig =
+        getTableSyncConfig(Arrays.asList(TableFormat.ICEBERG, TableFormat.DELTA), syncMode);
+    when(mockConversionSourceProvider.getConversionSourceInstance(
+            tableSyncConfig.getSourceTable(), tableSyncConfig.getProperties()))
         .thenReturn(mockConversionSource);
-    when(mockConversionTargetFactory.createForFormat(TableFormat.ICEBERG, perTableConfig, mockConf))
+    when(mockConversionTargetFactory.createForFormat(
+            tableSyncConfig.getTargetTables().get(0), mockConf))
         .thenReturn(mockConversionTarget1);
-    when(mockConversionTargetFactory.createForFormat(TableFormat.DELTA, perTableConfig, mockConf))
+    when(mockConversionTargetFactory.createForFormat(
+            tableSyncConfig.getTargetTables().get(1), mockConf))
         .thenReturn(mockConversionTarget2);
 
     Instant instantAsOfNow = Instant.now();
@@ -219,20 +228,23 @@ public class TestConversionController {
     ConversionController conversionController =
         new ConversionController(mockConf, mockConversionTargetFactory, tableFormatSync);
     Map<String, SyncResult> result =
-        conversionController.sync(perTableConfig, mockConversionSourceProvider);
+        conversionController.sync(tableSyncConfig, mockConversionSourceProvider);
     assertEquals(syncResults, result);
   }
 
   @Test
   void testIncrementalSyncFallbackToSnapshotForOnlySingleFormat() {
     SyncMode syncMode = SyncMode.INCREMENTAL;
-    PerTableConfig perTableConfig =
-        getPerTableConfig(Arrays.asList(TableFormat.ICEBERG, TableFormat.DELTA), syncMode);
-    when(mockConversionSourceProvider.getConversionSourceInstance(perTableConfig))
+    TableSyncConfig tableSyncConfig =
+        getTableSyncConfig(Arrays.asList(TableFormat.ICEBERG, TableFormat.DELTA), syncMode);
+    when(mockConversionSourceProvider.getConversionSourceInstance(
+            tableSyncConfig.getSourceTable(), tableSyncConfig.getProperties()))
         .thenReturn(mockConversionSource);
-    when(mockConversionTargetFactory.createForFormat(TableFormat.ICEBERG, perTableConfig, mockConf))
+    when(mockConversionTargetFactory.createForFormat(
+            tableSyncConfig.getTargetTables().get(0), mockConf))
         .thenReturn(mockConversionTarget1);
-    when(mockConversionTargetFactory.createForFormat(TableFormat.DELTA, perTableConfig, mockConf))
+    when(mockConversionTargetFactory.createForFormat(
+            tableSyncConfig.getTargetTables().get(1), mockConf))
         .thenReturn(mockConversionTarget2);
 
     Instant instantAsOfNow = Instant.now();
@@ -300,20 +312,23 @@ public class TestConversionController {
     ConversionController conversionController =
         new ConversionController(mockConf, mockConversionTargetFactory, tableFormatSync);
     Map<String, SyncResult> result =
-        conversionController.sync(perTableConfig, mockConversionSourceProvider);
+        conversionController.sync(tableSyncConfig, mockConversionSourceProvider);
     assertEquals(expectedSyncResult, result);
   }
 
   @Test
   void incrementalSyncWithNoPendingInstantsForAllFormats() {
     SyncMode syncMode = SyncMode.INCREMENTAL;
-    PerTableConfig perTableConfig =
-        getPerTableConfig(Arrays.asList(TableFormat.ICEBERG, TableFormat.DELTA), syncMode);
-    when(mockConversionSourceProvider.getConversionSourceInstance(perTableConfig))
+    TableSyncConfig tableSyncConfig =
+        getTableSyncConfig(Arrays.asList(TableFormat.ICEBERG, TableFormat.DELTA), syncMode);
+    when(mockConversionSourceProvider.getConversionSourceInstance(
+            tableSyncConfig.getSourceTable(), tableSyncConfig.getProperties()))
         .thenReturn(mockConversionSource);
-    when(mockConversionTargetFactory.createForFormat(TableFormat.ICEBERG, perTableConfig, mockConf))
+    when(mockConversionTargetFactory.createForFormat(
+            tableSyncConfig.getTargetTables().get(0), mockConf))
         .thenReturn(mockConversionTarget1);
-    when(mockConversionTargetFactory.createForFormat(TableFormat.DELTA, perTableConfig, mockConf))
+    when(mockConversionTargetFactory.createForFormat(
+            tableSyncConfig.getTargetTables().get(1), mockConf))
         .thenReturn(mockConversionTarget2);
 
     Instant instantAsOfNow = Instant.now();
@@ -355,7 +370,7 @@ public class TestConversionController {
     ConversionController conversionController =
         new ConversionController(mockConf, mockConversionTargetFactory, tableFormatSync);
     Map<String, SyncResult> result =
-        conversionController.sync(perTableConfig, mockConversionSourceProvider);
+        conversionController.sync(tableSyncConfig, mockConversionSourceProvider);
     assertEquals(expectedSyncResult, result);
   }
 
@@ -397,12 +412,30 @@ public class TestConversionController {
     return Instant.now().minus(Duration.ofMinutes(n));
   }
 
-  private PerTableConfig getPerTableConfig(List<String> targetTableFormats, SyncMode syncMode) {
-    return PerTableConfigImpl.builder()
-        .tableName(getTableName())
-        .tableBasePath("/tmp/doesnt/matter")
-        .targetTableFormats(targetTableFormats)
+  private TableSyncConfig getTableSyncConfig(List<String> targetTableFormats, SyncMode syncMode) {
+    SourceTable sourceTable =
+        SourceTable.builder()
+            .name("tablename")
+            .formatName(HUDI)
+            .metadataPath("/tmp/doesnt/matter")
+            .build();
+
+    List<TargetTable> targetTables =
+        targetTableFormats.stream()
+            .map(
+                formatName ->
+                    TargetTable.builder()
+                        .name("tablename")
+                        .formatName(formatName)
+                        .metadataPath("/tmp/doesnt/matter")
+                        .build())
+            .collect(Collectors.toList());
+
+    return TableSyncConfig.builder()
+        .sourceTable(sourceTable)
+        .targetTables(targetTables)
         .syncMode(syncMode)
+        .properties(Collections.singletonMap("some.property", "value"))
         .build();
   }
 

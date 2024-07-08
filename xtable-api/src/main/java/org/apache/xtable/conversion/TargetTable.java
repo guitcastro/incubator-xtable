@@ -18,10 +18,28 @@
  
 package org.apache.xtable.conversion;
 
-import org.apache.xtable.spi.extractor.SourcePartitionSpecExtractor;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
-public interface HudiSourceConfig {
-  public String getPartitionSpecExtractorClass();
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-  SourcePartitionSpecExtractor loadSourcePartitionSpecExtractor();
+@Getter
+@EqualsAndHashCode(callSuper = true)
+public class TargetTable extends ExternalTable {
+  Duration metadataRetention;
+
+  @Builder(toBuilder = true)
+  public TargetTable(
+      String name,
+      String formatName,
+      String metadataPath,
+      String[] namespace,
+      CatalogConfig catalogConfig,
+      Duration metadataRetention) {
+    super(name, formatName, metadataPath, namespace, catalogConfig);
+    this.metadataRetention =
+        metadataRetention == null ? Duration.of(7, ChronoUnit.DAYS) : metadataRetention;
+  }
 }

@@ -23,8 +23,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
@@ -46,10 +48,10 @@ import com.google.common.annotations.VisibleForTesting;
 
 import org.apache.xtable.conversion.ConversionController;
 import org.apache.xtable.conversion.ConversionSourceProvider;
-import org.apache.xtable.conversion.PerTableConfig;
-import org.apache.xtable.conversion.PerTableConfigImpl;
-import org.apache.xtable.hudi.ConfigurationBasedPartitionSpecExtractor;
-import org.apache.xtable.hudi.HudiSourceConfigImpl;
+import org.apache.xtable.conversion.SourceTable;
+import org.apache.xtable.conversion.TableSyncConfig;
+import org.apache.xtable.conversion.TargetTable;
+import org.apache.xtable.hudi.HudiSourceConfig;
 import org.apache.xtable.iceberg.IcebergCatalogConfig;
 import org.apache.xtable.model.storage.TableFormat;
 import org.apache.xtable.model.sync.SyncMode;
@@ -140,7 +142,7 @@ public class RunSync {
     String sourceProviderClass = sourceConversionConfig.conversionSourceProviderClass;
     ConversionSourceProvider<?> conversionSourceProvider =
         ReflectionUtils.createInstanceOfClass(sourceProviderClass);
-    conversionSourceProvider.init(hadoopConf, sourceConversionConfig.configuration);
+    conversionSourceProvider.init(hadoopConf);
 
     List<String> tableFormatList = datasetConfig.getTargetFormats();
     ConversionController conversionController = new ConversionController(hadoopConf);
@@ -149,24 +151,43 @@ public class RunSync {
           "Running sync for basePath {} for following table formats {}",
           table.getTableBasePath(),
           tableFormatList);
-      PerTableConfig config =
-          PerTableConfigImpl.builder()
-              .tableBasePath(table.getTableBasePath())
-              .tableName(table.getTableName())
+      SourceTable sourceTable =
+          SourceTable.builder()
+              .name(table.getTableName())
+              .metadataPath(table.getTableBasePath())
               .namespace(table.getNamespace() == null ? null : table.getNamespace().split("\\."))
-              .tableDataPath(table.getTableDataPath())
-              .icebergCatalogConfig(icebergCatalogConfig)
-              .hudiSourceConfig(
-                  HudiSourceConfigImpl.builder()
-                      .partitionSpecExtractorClass(
-                          ConfigurationBasedPartitionSpecExtractor.class.getName())
-                      .partitionFieldSpecConfig(table.getPartitionSpec())
-                      .build())
-              .targetTableFormats(tableFormatList)
+              .dataPath(table.getTableDataPath())
+              .catalogConfig(icebergCatalogConfig)
+              .formatName(sourceFormat)
+              .build();
+      List<TargetTable> targetTables =
+          tableFormatList.stream()
+              .map(
+                  tableFormat ->
+                      TargetTable.builder()
+                          .name(table.getTableName())
+                          .metadataPath(table.getTableBasePath())
+                          .namespace(
+                              table.getNamespace() == null
+                                  ? null
+                                  : table.getNamespace().split("\\."))
+                          .metadataPath(table.getTableDataPath())
+                          .catalogConfig(icebergCatalogConfig)
+                          .formatName(tableFormat)
+                          .build())
+              .collect(Collectors.toList());
+
+      TableSyncConfig tableSyncConfig =
+          TableSyncConfig.builder()
+              .sourceTable(sourceTable)
+              .targetTables(targetTables)
               .syncMode(SyncMode.INCREMENTAL)
+              .properties(
+                  Collections.singletonMap(
+                      HudiSourceConfig.PARTITION_FIELD_SPEC_CONFIG, table.getPartitionSpec()))
               .build();
       try {
-        conversionController.sync(config, conversionSourceProvider);
+        conversionController.sync(tableSyncConfig, conversionSourceProvider);
       } catch (Exception e) {
         log.error(String.format("Error running sync for %s", table.getTableBasePath()), e);
       }

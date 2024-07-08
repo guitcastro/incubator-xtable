@@ -16,23 +16,20 @@
  * limitations under the License.
  */
  
-package org.apache.xtable.iceberg;
+package org.apache.xtable.conversion;
 
-import java.util.Map;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.apache.iceberg.Snapshot;
+import java.time.Duration;
 
-import org.apache.xtable.conversion.ConversionSourceProvider;
-import org.apache.xtable.conversion.SourceTable;
+import org.junit.jupiter.api.Test;
 
-/** A concrete implementation of {@link ConversionSourceProvider} for Hudi table format. */
-public class IcebergConversionSourceProvider extends ConversionSourceProvider<Snapshot> {
-  @Override
-  public IcebergConversionSource getConversionSourceInstance(
-      SourceTable sourceTableConfig, Map<String, String> clientConf) {
-    return IcebergConversionSource.builder()
-        .sourceTableConfig(sourceTableConfig)
-        .hadoopConf(hadoopConf)
-        .build();
+class TestTargetTable {
+  @Test
+  void retentionDefaultsToSevenDays() {
+    String metadataPath = "file:///path/to/table";
+    TargetTable targetTable =
+        TargetTable.builder().name("name").formatName("hudi").metadataPath(metadataPath).build();
+    assertEquals(Duration.ofDays(7), targetTable.getMetadataRetention());
   }
 }
