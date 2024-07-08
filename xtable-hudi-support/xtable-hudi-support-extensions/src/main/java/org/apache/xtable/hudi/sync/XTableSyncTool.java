@@ -18,6 +18,9 @@
  
 package org.apache.xtable.hudi.sync;
 
+import static org.apache.xtable.hudi.HudiSourceConfig.PARTITION_FIELD_SPEC_CONFIG;
+
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -35,9 +38,10 @@ import org.apache.hudi.sync.common.HoodieSyncConfig;
 import org.apache.hudi.sync.common.HoodieSyncTool;
 
 import org.apache.xtable.conversion.ConversionController;
+import org.apache.xtable.conversion.SourceTable;
 import org.apache.xtable.conversion.TableSyncConfig;
+import org.apache.xtable.conversion.TargetTable;
 import org.apache.xtable.hudi.HudiConversionSourceProvider;
-import org.apache.xtable.hudi.HudiSourceConfigImpl;
 import org.apache.xtable.model.schema.PartitionTransformType;
 import org.apache.xtable.model.sync.SyncMode;
 import org.apache.xtable.model.sync.SyncResult;
@@ -54,7 +58,7 @@ public class XTableSyncTool extends HoodieSyncTool {
     super(props, hadoopConf);
     this.config = new XTableSyncConfig(props);
     this.hudiConversionSourceProvider = new HudiConversionSourceProvider();
-    hudiConversionSourceProvider.init(hadoopConf, Collections.emptyMap());
+    hudiConversionSourceProvider.init(hadoopConf);
   }
 
   @Override
@@ -65,18 +69,27 @@ public class XTableSyncTool extends HoodieSyncTool {
             .collect(Collectors.toList());
     String basePath = config.getString(HoodieSyncConfig.META_SYNC_BASE_PATH);
     String tableName = config.getString(HoodieTableConfig.HOODIE_TABLE_NAME_KEY);
+    SourceTable sourceTable = SourceTable.builder().name(tableName).metadataPath(basePath).build();
+    List<TargetTable> targetTables =
+        formatsToSync.stream()
+            .map(
+                format ->
+                    TargetTable.builder()
+                        .metadataPath(basePath)
+                        .metadataRetention(
+                            Duration.ofHours(
+                                config.getInt(
+                                    XTableSyncConfig.ONE_TABLE_TARGET_METADATA_RETENTION_HOURS)))
+                        .formatName(format)
+                        .build())
+            .collect(Collectors.toList());
     TableSyncConfig tableSyncConfig =
-        TableSyncConfigImpl.builder()
-            .tableName(tableName)
-            .tableBasePath(basePath)
-            .targetTableFormats(formatsToSync)
-            .hudiSourceConfig(
-                HudiSourceConfigImpl.builder()
-                    .partitionFieldSpecConfig(getPartitionSpecConfig())
-                    .build())
+        TableSyncConfig.builder()
+            .sourceTable(sourceTable)
+            .targetTables(targetTables)
             .syncMode(SyncMode.INCREMENTAL)
-            .targetMetadataRetentionInHours(
-                config.getInt(XTableSyncConfig.ONE_TABLE_TARGET_METADATA_RETENTION_HOURS))
+            .properties(
+                Collections.singletonMap(PARTITION_FIELD_SPEC_CONFIG, getPartitionSpecConfig()))
             .build();
     Map<String, SyncResult> results =
         new ConversionController(hadoopConf).sync(tableSyncConfig, hudiConversionSourceProvider);
@@ -86,7 +99,7 @@ public class XTableSyncTool extends HoodieSyncTool {
                 entry ->
                     entry.getValue().getStatus().getStatusCode()
                         != SyncResult.SyncStatusCode.SUCCESS)
-            .map(entry -> entry.getKey().toString())
+            .map(Map.Entry::getKey)
             .collect(Collectors.joining(","));
     if (!failingFormats.isEmpty()) {
       throw new HoodieException("Unable to sync to InternalTable for formats: " + failingFormats);

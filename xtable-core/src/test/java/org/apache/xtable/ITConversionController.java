@@ -850,7 +850,7 @@ public class ITConversionController {
       String tableName,
       GenericTable table,
       List<String> targetTableFormats,
-      String oneTablePartitionConfig,
+      String partitionConfig,
       Integer metadataRetentionInHours) {
     SourceTable sourceTable =
         SourceTable.builder()
@@ -876,7 +876,7 @@ public class ITConversionController {
         .sourceTable(sourceTable)
         .targetTables(targetTables)
         .syncMode(syncMode)
-        .properties(Collections.singletonMap(PARTITION_FIELD_SPEC_CONFIG, oneTablePartitionConfig))
+        .properties(Collections.singletonMap(PARTITION_FIELD_SPEC_CONFIG, partitionConfig))
         .build();
   }
 }

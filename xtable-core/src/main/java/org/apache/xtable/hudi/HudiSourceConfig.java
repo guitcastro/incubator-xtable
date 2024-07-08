@@ -35,9 +35,9 @@ import org.apache.xtable.reflection.ReflectionUtils;
 @Value
 public class HudiSourceConfig {
   public static final String PARTITION_SPEC_EXTRACTOR_CLASS =
-      "onetable.hudi.source.partition_spec_extractor_class";
+      "xtable.hudi.source.partition_spec_extractor_class";
   public static final String PARTITION_FIELD_SPEC_CONFIG =
-      "onetable.hudi.source.partition_field_spec_config";
+      "xtable.hudi.source.partition_field_spec_config";
 
   String partitionSpecExtractorClass;
   List<PartitionFieldSpec> partitionFieldSpecs;
