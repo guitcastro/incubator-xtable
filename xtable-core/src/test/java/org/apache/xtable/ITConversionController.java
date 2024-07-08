@@ -636,7 +636,7 @@ public class ITConversionController {
               table,
               Arrays.asList(ICEBERG, DELTA),
               null,
-              0); // force cleanup
+              Duration.ofHours(0)); // force cleanup
       ConversionController conversionController =
           new ConversionController(jsc.hadoopConfiguration());
       table.insertRecords(10, true);
@@ -851,7 +851,7 @@ public class ITConversionController {
       GenericTable table,
       List<String> targetTableFormats,
       String partitionConfig,
-      Integer metadataRetentionInHours) {
+      Duration metadataRetention) {
     SourceTable sourceTable =
         SourceTable.builder()
             .name(tableName)
@@ -867,8 +867,9 @@ public class ITConversionController {
                     TargetTable.builder()
                         .name(tableName)
                         .formatName(formatName)
-                        .metadataPath(table.getBasePath())
-                        .metadataRetention(Duration.of(metadataRetentionInHours, ChronoUnit.HOURS))
+                        // set the metadata path to the data path as the default (required by Hudi)
+                        .metadataPath(table.getDataPath())
+                        .metadataRetention(metadataRetention)
                         .build())
             .collect(Collectors.toList());
 

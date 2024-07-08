@@ -32,10 +32,13 @@ import org.apache.xtable.model.sync.SyncMode;
 
 @Value
 public class TableSyncConfig {
-  // TODO add docs for all fields
+  // The source of the sync
   @NonNull SourceTable sourceTable;
+  // One or more targets to sync the table metadata to
   List<TargetTable> targetTables;
+  // The mode, incremental or snapshot
   SyncMode syncMode;
+  // Additional properties to be used when initializing the conversion source
   Map<String, String> properties;
 
   @Builder
