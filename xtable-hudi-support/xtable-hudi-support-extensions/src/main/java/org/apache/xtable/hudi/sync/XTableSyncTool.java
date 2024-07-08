@@ -70,9 +70,13 @@ public class XTableSyncTool extends HoodieSyncTool {
             .collect(Collectors.toList());
     String basePath = config.getString(HoodieSyncConfig.META_SYNC_BASE_PATH);
     String tableName = config.getString(HoodieTableConfig.HOODIE_TABLE_NAME_KEY);
-    SourceTable sourceTable = SourceTable.builder().name(tableName).formatName(HUDI).metadataPath(basePath).build();
-    Duration metadataRetention = config.contains(XTableSyncConfig.XTABLE_TARGET_METADATA_RETENTION_HOURS) ? Duration.ofHours(
-        config.getInt(XTableSyncConfig.XTABLE_TARGET_METADATA_RETENTION_HOURS)) : null;
+    SourceTable sourceTable =
+        SourceTable.builder().name(tableName).formatName(HUDI).metadataPath(basePath).build();
+    Duration metadataRetention =
+        config.contains(XTableSyncConfig.XTABLE_TARGET_METADATA_RETENTION_HOURS)
+            ? Duration.ofHours(
+                config.getInt(XTableSyncConfig.XTABLE_TARGET_METADATA_RETENTION_HOURS))
+            : null;
     List<TargetTable> targetTables =
         formatsToSync.stream()
             .map(
