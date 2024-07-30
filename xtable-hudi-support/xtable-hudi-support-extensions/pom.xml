@@ -23,7 +23,7 @@
 
     <parent>
         <groupId>org.apache.xtable</groupId>
-        <artifactId>xtable-hudi-support</artifactId>
+        <artifactId>incubator-xtable-hudi-support</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
@@ -34,7 +34,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.xtable</groupId>
-            <artifactId>xtable-core</artifactId>
+            <artifactId>incubator-xtable-core</artifactId>
         </dependency>
 
         <!-- Logging API -->
